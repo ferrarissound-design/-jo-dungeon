@@ -50,7 +50,7 @@ export class GameState {
   if(a.type==='item')return this.useItem(a.index,a.mode);
   return false;
  }
- pickup(){const r=this.run,p=r.player,d=r.dungeon;for(let n=d.loot.length-1;n>=0;n--){const i=d.loot[n];if(this.at(i,p)){if(p.inventory.length>=CAPACITY){this.log('かばんがいっぱい！ 道具を使うか置こう。');break;}p.inventory.push(item(i.type,i.power));d.loot.splice(n,1);this.log(`${label(i)}をひろった！`);this.event('pickup',p);}}if(this.at(p,d.stairs))this.log(r.floor===10?'ゴールだ！「足元」で宝を持ち帰ろう！':'階段だ！「足元」で次の階へ。');if(d.chests.some(c=>!c.opened&&this.at(c,p)))this.log('宝箱だ！「足元」であけよう。');}
+ pickup(){const r=this.run,p=r.player,d=r.dungeon;for(let n=d.loot.length-1;n>=0;n--){const i=d.loot[n];if(this.at(i,p)){if(p.inventory.length>=CAPACITY){this.log('かばんがいっぱい！ 道具を使うか置こう。');break;}p.inventory.push({...item(i.type,i.power),...(i.starter?{starter:true}:{})});d.loot.splice(n,1);this.log(`${label(i)}をひろった！`);this.event('pickup',p);}}if(this.at(p,d.stairs))this.log(r.floor===10?'ゴールだ！「足元」で宝を持ち帰ろう！':'階段だ！「足元」で次の階へ。');if(d.chests.some(c=>!c.opened&&this.at(c,p)))this.log('宝箱だ！「足元」であけよう。');}
  hurt(target,amount){target.hp=Math.max(0,target.hp-amount);this.event('damage',target,`−${amount}`);}
  hit(attacker,target,power){
   const p=this.run.player;const defense=target===p?Player.defense(p):target.defense;
@@ -112,9 +112,9 @@ export class GameState {
  }}
  triggerHouse(){const r=this.run,h=r.dungeon.house;if(!h||h.triggered||roomAt(r.dungeon,r.player)!==r.dungeon.rooms[h.roomIndex])return;h.triggered=true;const room=r.dungeon.rooms[h.roomIndex];const spots=[];for(let y=room.y;y<room.y+room.h;y++)for(let x=room.x;x<room.x+room.w;x++)if(!this.occupied({x,y})&&distance({x,y},r.player)>1&&!this.at({x,y},r.dungeon.stairs))spots.push({x,y});for(let i=0;i<Math.min(5,spots.length);i++){const p=spots.splice(Math.floor(this.random()*spots.length),1)[0];const e=new Enemy(i%2?'raptor':'slime',r.floor,p.x,p.y,`house${r.turn}-${i}`);e.asleep=2;r.dungeon.enemies.push(e);}this.log('モンスターハウス！ 巻物でピンチをチャンスに！');this.event('house',r.player);}
  finish(clear){
-  const r=this.run,t=this.town;const coins=clear?r.coins:Math.ceil(r.coins*.6),points=r.floor*5+(clear?50:0);
+  const r=this.run,t=this.town;const coins=clear?r.coins:Math.ceil(r.coins*.6),points=(clear||r.floor>1||r.coins>0||r.steps>=10)?r.floor*5+(clear?50:0):0;
   t.coins+=coins;t.points+=points;t.eggs+=r.eggs;t.best=Math.max(t.best,r.floor);if(clear)t.clears++;
-  const rescued=r.player.inventory.slice(0,clear?CAPACITY:3);t.storage.push(...rescued);t.equipment=structuredClone(r.player.equipment);
+  const rescued=r.player.inventory.filter(i=>!i.starter).slice(0,clear?CAPACITY:3);t.storage.push(...rescued);t.equipment=structuredClone(r.player.equipment);
   for(const type of r.recruited)if(!t.dinosaurs.some(d=>d.type===type))t.dinosaurs.push({id:type,type,level:1});
   this.result={clear,floor:r.floor,coins,points,eggs:r.eggs,items:rescued.length};this.run=null;this.persist();
  }
