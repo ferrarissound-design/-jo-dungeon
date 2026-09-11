@@ -1,3 +1,4 @@
+import {installTouchGuards} from './ui/TouchGuards.js';
 import {GameState,CAPACITY} from './core/GameState.js';
 import {SaveManager} from './core/SaveManager.js';
 import {Player} from './core/Player.js';
@@ -38,8 +39,6 @@ document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click'
 const keys={ArrowUp:[0,-1],w:[0,-1],ArrowDown:[0,1],s:[0,1],ArrowLeft:[-1,0],a:[-1,0],ArrowRight:[1,0],d:[1,0],q:[-1,-1],e:[1,-1],z:[-1,1],c:[1,1],'7':[-1,-1],'8':[0,-1],'9':[1,-1],'4':[-1,0],'6':[1,0],'1':[-1,1],'2':[0,1],'3':[1,1]};
 document.addEventListener('keydown',e=>{if(!game.run||dialog.open)return;const k=e.key.length===1?e.key.toLowerCase():e.key;if(keys[k]||[' ','i','f','.','5'].includes(k))e.preventDefault();if(e.repeat)return;if(keys[k])act({type:'move',dx:keys[k][0],dy:keys[k][1]});else if(k===' ')act({type:'attack'});else if(k==='i')inventory();else if(k==='f')act({type:'inspect'});else if(k==='.'||k==='5')act({type:'wait'});});
 // One click is one action. No pointerdown+click pair or held-key repeat.
-for(const event of ['gesturestart','gesturechange','gestureend'])document.addEventListener(event,e=>{if(game.run)e.preventDefault();},{passive:false});
-document.addEventListener('touchmove',e=>{if(game.run&&!dialog.open&&e.touches.length>1)e.preventDefault();},{passive:false});
-$('#adventure').addEventListener('contextmenu',e=>e.preventDefault());
+installTouchGuards(document);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)game.persist();});window.addEventListener('pagehide',()=>game.persist());
 update();
